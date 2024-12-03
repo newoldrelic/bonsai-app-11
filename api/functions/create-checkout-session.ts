@@ -2,7 +2,6 @@ import { Handler } from '@netlify/functions';
 import Stripe from 'stripe';
 import { debug } from '../../src/utils/debug';
 
-// Initialize Stripe with secret key from environment
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16'
 });
@@ -15,12 +14,10 @@ export const handler: Handler = async (event) => {
     'Content-Type': 'application/json'
   };
 
-  // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Validate request method
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -29,7 +26,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // Validate Stripe configuration
   if (!process.env.STRIPE_SECRET_KEY) {
     debug.error('Missing STRIPE_SECRET_KEY environment variable');
     return {
@@ -46,7 +42,6 @@ export const handler: Handler = async (event) => {
 
     const { priceId, userEmail, returnUrl } = JSON.parse(event.body);
 
-    // Validate required parameters
     if (!priceId || !userEmail || !returnUrl) {
       return {
         statusCode: 400,
@@ -64,7 +59,6 @@ export const handler: Handler = async (event) => {
 
     debug.info('Creating checkout session:', { priceId, userEmail });
 
-    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],

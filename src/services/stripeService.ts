@@ -25,10 +25,3 @@ export async function createCheckoutSession(priceId: string, userEmail: string) 
 export function getPlanDetails(planId: string) {
   return PRICING_PLANS.find(plan => plan.id === planId);
 }
-
-export function formatPrice(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-}
