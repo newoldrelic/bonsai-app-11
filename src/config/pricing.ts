@@ -43,12 +43,12 @@ export interface PricingConfig {
 
 export const PRICING_TIERS = {
   HOBBY: 'price_hobby',
-  PREMIUM_MONTHLY: 'price_premium_monthly',
-  PREMIUM_ANNUAL: 'price_premium_annual',
-  GIFT_1MONTH: 'price_gift_1month',
-  GIFT_3MONTHS: 'price_gift_3months',
-  GIFT_6MONTHS: 'price_gift_6months',
-  GIFT_12MONTHS: 'price_gift_12months'
+  PREMIUM_MONTHLY: 'prod_RKdDwsDOq6Yuvs',
+  PREMIUM_ANNUAL: 'prod_RKdJ5RtRtQB4QS',
+  GIFT_1MONTH: 'prod_RKxqkxNVg7xMYk',
+  GIFT_3MONTHS: 'prod_RKxsdofHJPePb9',
+  GIFT_6MONTHS: 'prod_RKxvXUCKXkdcU2',
+  GIFT_12MONTHS: 'prod_RKxxeMhTgOvAjb'
 } as const;
 
 export const PRICING_CONFIG: PricingConfig = {
