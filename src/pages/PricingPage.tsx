@@ -180,12 +180,18 @@ export function PricingPage() {
                 <div key={duration} className="card p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
                   <div className="text-center mb-4">
                     <Gift className="w-8 h-8 text-bonsai-terra mx-auto mb-2" />
-                    <h3 className="text-xl font-bold text-bonsai-bark dark:text-white">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Crown className="w-4 h-4 text-bonsai-terra" />
+                      <h3 className="text-lg font-bold text-bonsai-bark dark:text-white">
+                        Premium Access
+                      </h3>
+                    </div>
+                    <div className="text-2xl font-bold text-bonsai-terra mt-1">
                       {duration === 'twelveMonths' ? '12 Months' :
                        duration === 'sixMonths' ? '6 Months' :
                        duration === 'threeMonths' ? '3 Months' : '1 Month'}
-                    </h3>
-                    <div className="mt-2">
+                    </div>
+                    <div className="mt-3">
                       <span className="text-sm text-stone-500 line-through">
                         {formatPrice(option.originalPrice, currency)}
                       </span>
