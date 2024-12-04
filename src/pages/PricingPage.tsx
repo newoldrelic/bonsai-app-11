@@ -1,6 +1,6 @@
-import React from 'react';
-import { Check, AlertCircle, Crown, Gift } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { Check, AlertCircle, Crown, Gift, Info } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { CurrencySelector } from '../components/CurrencySelector';
@@ -9,10 +9,20 @@ import { PRICING_CONFIG, PRICING_TIERS, HOBBY_FEATURES, PREMIUM_FEATURES } from 
 
 export function PricingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const giftSectionRef = useRef<HTMLDivElement>(null);
   const { user } = useAuthStore();
-  const { createCheckoutSession, getCurrentPlan, loading, error, clearError } = useSubscriptionStore();
+  const { createCheckoutSession, getCurrentPlan, loading, error } = useSubscriptionStore();
   const { current: currency } = useCurrencyStore();
   const currentPlan = getCurrentPlan();
+
+  useEffect(() => {
+    if (location.hash === '#gift-options' && giftSectionRef.current) {
+      setTimeout(() => {
+        giftSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [location.hash]);
 
   const handleSubscribe = async (priceId: string) => {
     if (!priceId) return;
@@ -155,10 +165,16 @@ export function PricingPage() {
 
         {/* Gift Options */}
         {PRICING_CONFIG.gifts.enabled && (
-          <div className="mt-16">
-            <h2 className="text-2xl font-bold text-center text-bonsai-bark dark:text-white mb-8">
-              Holiday Special: Gift Premium Access
-            </h2>
+          <div ref={giftSectionRef} className="mt-16 scroll-mt-8" id="gift-options">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-bonsai-bark dark:text-white mb-2">
+                Holiday Special: Gift Premium Access
+              </h2>
+              <div className="flex items-center justify-center gap-2 text-stone-600 dark:text-stone-300">
+                <Info className="w-4 h-4" />
+                <p className="text-sm">One-time payment, no recurring charges</p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
               {Object.entries(PRICING_CONFIG.gifts.options).map(([duration, option]) => (
                 <div key={duration} className="card p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
@@ -180,6 +196,11 @@ export function PricingPage() {
                     <div className="text-sm text-bonsai-terra mt-1">
                       Save {option.discount}%
                     </div>
+                    <div className="text-xs text-stone-500 dark:text-stone-400 mt-2">
+                      Single payment for {duration === 'twelveMonths' ? '1 year' :
+                                       duration === 'sixMonths' ? '6 months' :
+                                       duration === 'threeMonths' ? '3 months' : '1 month'} of Premium
+                    </div>
                   </div>
                   <button
                     onClick={() => handleSubscribe(PRICING_TIERS[`GIFT_${duration === 'twelveMonths' ? '12MONTHS' : 
@@ -188,7 +209,7 @@ export function PricingPage() {
                     disabled={loading}
                     className="w-full py-2 px-4 rounded-lg font-medium bg-bonsai-terra text-white hover:bg-bonsai-clay transition-colors disabled:opacity-50"
                   >
-                    {loading ? 'Processing...' : 'Gift Now'}
+                    {loading ? 'Processing...' : 'Buy Gift'}
                   </button>
                 </div>
               ))}

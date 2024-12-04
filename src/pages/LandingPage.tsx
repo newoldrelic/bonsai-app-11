@@ -33,6 +33,10 @@ export function LandingPage() {
     }
   };
 
+  const navigateToGiftSection = () => {
+    navigate('/pricing#gift-options');
+  };
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-stone-100 dark:bg-stone-900">
       <div className="relative flex-1 min-h-0">
@@ -56,7 +60,7 @@ export function LandingPage() {
                       <span className="text-sm font-medium">Close</span>
                     </button>
                     <button
-                      onClick={() => navigate('/pricing')}
+                      onClick={navigateToGiftSection}
                       className="relative"
                     >
                       <div className="absolute inset-0 bg-bonsai-terra rounded-lg transform rotate-3 group-hover:rotate-6 transition-transform"></div>

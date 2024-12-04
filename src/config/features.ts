@@ -41,7 +41,7 @@ export const FEATURES: Feature[] = [
     description: 'Get instant expert analysis and personalized treatment recommendations',
     path: '/health-analytics',
     icon: Stethoscope,
-    isPremium: false
+    isPremium: true
   },
   {
     id: 'care-guide',
@@ -49,7 +49,7 @@ export const FEATURES: Feature[] = [
     description: 'Expert care instructions customized to your tree and location',
     path: '/care-guide',
     icon: Book,
-    isPremium: false
+    isPremium: true
   },
   {
     id: 'expert-coaching',
@@ -57,6 +57,6 @@ export const FEATURES: Feature[] = [
     description: 'One-on-one video calls and chat support with bonsai masters',
     path: '/expert-coaching',
     icon: PhoneCall,
-    isPremium: false
+    isPremium: true
   }
 ];
