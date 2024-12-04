@@ -41,14 +41,15 @@ export interface PricingConfig {
   };
 }
 
+// Use price IDs instead of product IDs
 export const PRICING_TIERS = {
-  HOBBY: 'price_hobby',
-  PREMIUM_MONTHLY: 'prod_RKdDwsDOq6Yuvs',
-  PREMIUM_ANNUAL: 'prod_RKdJ5RtRtQB4QS',
-  GIFT_1MONTH: 'prod_RKxqkxNVg7xMYk',
-  GIFT_3MONTHS: 'prod_RKxsdofHJPePb9',
-  GIFT_6MONTHS: 'prod_RKxvXUCKXkdcU2',
-  GIFT_12MONTHS: 'prod_RKxxeMhTgOvAjb'
+  HOBBY: '',  // Free tier doesn't need a price ID
+  PREMIUM_MONTHLY: 'price_1OqXYvFwFmksLDAYxJKG8V9q',
+  PREMIUM_ANNUAL: 'price_1OqXZ9FwFmksLDAYPQWxhNpM',
+  GIFT_1MONTH: 'price_1OqXZMFwFmksLDAYK9YgNxP2',
+  GIFT_3MONTHS: 'price_1OqXZaFwFmksLDAYrWgL8n9q',
+  GIFT_6MONTHS: 'price_1OqXZnFwFmksLDAYQJKpN3M2',
+  GIFT_12MONTHS: 'price_1OqXa1FwFmksLDAYxcKjP9Mq'
 } as const;
 
 export const PRICING_CONFIG: PricingConfig = {

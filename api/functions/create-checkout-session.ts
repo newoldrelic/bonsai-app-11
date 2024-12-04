@@ -41,15 +41,37 @@ export const handler: Handler = async (event) => {
 
     const { priceId, userEmail, returnUrl } = JSON.parse(event.body);
 
+    debug.info('Creating checkout session:', { priceId, userEmail });
+
     if (!priceId || !userEmail || !returnUrl) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing required parameters' })
+        body: JSON.stringify({ 
+          error: 'Missing required parameters',
+          details: {
+            priceId: !priceId,
+            userEmail: !userEmail,
+            returnUrl: !returnUrl
+          }
+        })
       };
     }
 
-    debug.info('Creating checkout session:', { priceId, userEmail });
+    // Verify the price ID exists in Stripe
+    try {
+      await stripe.prices.retrieve(priceId);
+    } catch (error: any) {
+      debug.error('Invalid price ID:', error);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Invalid price ID',
+          details: error.message
+        })
+      };
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -73,6 +95,8 @@ export const handler: Handler = async (event) => {
       throw new Error('Failed to generate checkout URL');
     }
 
+    debug.info('Checkout session created successfully:', { sessionId: session.id });
+
     return {
       statusCode: 200,
       headers,
@@ -86,7 +110,8 @@ export const handler: Handler = async (event) => {
       statusCode: error.statusCode || 500,
       headers,
       body: JSON.stringify({ 
-        error: error.message || 'Failed to create checkout session'
+        error: error.message || 'Failed to create checkout session',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
       })
     };
   }
