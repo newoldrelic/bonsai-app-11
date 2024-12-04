@@ -1,6 +1,6 @@
-import { PRICING_PLANS } from '../config/stripe';
+import { PRICING_TIERS } from '../config/pricing';
 
-export async function createCheckoutSession(priceId: string, userEmail: string) {
+export async function createCheckoutSession(priceId: string, userEmail: string): Promise<string> {
   const response = await fetch('/.netlify/functions/create-checkout-session', {
     method: 'POST',
     headers: {
@@ -19,9 +19,14 @@ export async function createCheckoutSession(priceId: string, userEmail: string) 
   }
 
   const data = await response.json();
+  
+  if (!data.url) {
+    throw new Error('No checkout URL received');
+  }
+
   return data.url;
 }
 
 export function getPlanDetails(planId: string) {
-  return PRICING_PLANS.find(plan => plan.id === planId);
+  return PRICING_TIERS[planId as keyof typeof PRICING_TIERS] || PRICING_TIERS.HOBBY;
 }

@@ -10,8 +10,7 @@ export const handler: Handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json'
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
   if (event.httpMethod === 'OPTIONS') {
@@ -46,14 +45,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ 
-          error: 'Missing required parameters',
-          missing: {
-            priceId: !priceId,
-            userEmail: !userEmail,
-            returnUrl: !returnUrl
-          }
-        })
+        body: JSON.stringify({ error: 'Missing required parameters' })
       };
     }
 
@@ -72,7 +64,6 @@ export const handler: Handler = async (event) => {
       success_url: `${returnUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl}/pricing`,
       allow_promotion_codes: true,
-      billing_address_collection: 'required',
       metadata: {
         userEmail
       }
@@ -81,8 +72,6 @@ export const handler: Handler = async (event) => {
     if (!session.url) {
       throw new Error('Failed to generate checkout URL');
     }
-
-    debug.info('Checkout session created successfully:', { sessionId: session.id });
 
     return {
       statusCode: 200,
@@ -93,20 +82,11 @@ export const handler: Handler = async (event) => {
   } catch (error: any) {
     debug.error('Checkout session error:', error);
     
-    let statusCode = 500;
-    let message = 'Failed to create checkout session';
-
-    if (error.type === 'StripeInvalidRequestError') {
-      statusCode = 400;
-      message = error.message;
-    }
-
     return {
-      statusCode,
+      statusCode: error.statusCode || 500,
       headers,
       body: JSON.stringify({ 
-        error: message,
-        details: error.message
+        error: error.message || 'Failed to create checkout session'
       })
     };
   }
