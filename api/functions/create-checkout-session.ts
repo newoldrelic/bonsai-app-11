@@ -39,9 +39,9 @@ export const handler: Handler = async (event) => {
       throw new Error('Missing request body');
     }
 
-    const { priceId, userEmail, returnUrl } = JSON.parse(event.body);
+    const { priceId, userEmail, giftEmail, returnUrl } = JSON.parse(event.body);
 
-    debug.info('Creating checkout session:', { priceId, userEmail });
+    debug.info('Creating checkout session:', { priceId, userEmail, giftEmail });
 
     if (!priceId || !userEmail || !returnUrl) {
       return {
@@ -83,11 +83,12 @@ export const handler: Handler = async (event) => {
         },
       ],
       customer_email: userEmail,
-      success_url: `${returnUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl}/pricing`,
       allow_promotion_codes: true,
       metadata: {
-        userEmail
+        userEmail,
+        giftEmail: giftEmail || ''
       }
     });
 
