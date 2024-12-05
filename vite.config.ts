@@ -1,13 +1,25 @@
-/// <reference types="vite/client" />
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-interface ImportMetaEnv {
-  readonly VITE_DEBUG_LEVELS: string
-  readonly VITE_STRIPE_PUBLISHABLE_KEY: string
-  readonly VITE_STRIPE_SECRET_KEY: string
-  readonly VITE_STRIPE_WEBHOOK_SECRET: string
-  readonly VITE_OPENAI_API_KEY: string
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv
-}
+export default defineConfig({
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics'],
+        }
+      }
+    }
+  },
+  server: {
+    port: 5173,
+    strictPort: true
+  }
+});
