@@ -46,17 +46,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       getCurrentPlan: () => {
         const { subscription } = get();
-        const user = auth.currentUser;
-        
-        if (!user) {
-          return 'hobby';
-        }
-
-        if (subscription?.status === 'active') {
-          return subscription.planId;
-        }
-
-        return 'hobby';
+        if (!subscription) return 'hobby';
+        return subscription.status === 'active' ? subscription.planId : 'hobby';
       },
 
       clearError: () => set({ error: null })
@@ -75,26 +66,38 @@ auth.onAuthStateChanged(async (user) => {
   if (user?.email) {
     const subscriptionRef = doc(db, 'subscriptions', user.email);
     
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(subscriptionRef, 
-      (doc) => {
-        if (doc.exists()) {
-          const subscription = doc.data() as UserSubscription;
-          debug.info('Subscription updated:', subscription);
-          useSubscriptionStore.getState().setSubscription(subscription);
-        } else {
-          debug.info('No subscription found');
+    try {
+      // Get initial subscription state
+      const docSnap = await getDoc(subscriptionRef);
+      if (docSnap.exists()) {
+        const subscription = docSnap.data() as UserSubscription;
+        useSubscriptionStore.getState().setSubscription(subscription);
+      }
+
+      // Set up real-time listener
+      const unsubscribe = onSnapshot(subscriptionRef, 
+        (doc) => {
+          if (doc.exists()) {
+            const subscription = doc.data() as UserSubscription;
+            debug.info('Subscription updated:', subscription);
+            useSubscriptionStore.getState().setSubscription(subscription);
+          } else {
+            debug.info('No subscription found');
+            useSubscriptionStore.getState().setSubscription(null);
+          }
+        },
+        (error) => {
+          debug.error('Error listening to subscription changes:', error);
           useSubscriptionStore.getState().setSubscription(null);
         }
-      },
-      (error) => {
-        debug.error('Error listening to subscription changes:', error);
-        useSubscriptionStore.getState().setSubscription(null);
-      }
-    );
+      );
 
-    // Clean up listener on auth state change
-    return () => unsubscribe();
+      // Clean up listener on auth state change
+      return () => unsubscribe();
+    } catch (error) {
+      debug.error('Error setting up subscription listener:', error);
+      useSubscriptionStore.getState().setSubscription(null);
+    }
   } else {
     useSubscriptionStore.getState().setSubscription(null);
   }

@@ -1,17 +1,9 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { PRICING_CONFIG, HOBBY_FEATURES, PREMIUM_FEATURES, PRICING_TIERS } from './pricing';
 
-// Test mode publishable key
 export const stripePromise = typeof window !== 'undefined' 
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
   : null;
-
-// Test card numbers for different scenarios
-export const TEST_CARDS = {
-  success: '4242424242424242', // Always succeeds
-  requiresAuth: '4000002500003155', // Requires authentication
-  declined: '4000000000000002', // Always fails
-};
 
 // Pricing configuration
 export const PRICING_PLANS = [
