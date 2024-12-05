@@ -1,6 +1,7 @@
 import { Handler } from '@netlify/functions';
 import Stripe from 'stripe';
 import { debug } from '../../src/utils/debug';
+import { validatePromotionCode } from '../../src/config/promotions';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16'
@@ -39,9 +40,9 @@ export const handler: Handler = async (event) => {
       throw new Error('Missing request body');
     }
 
-    const { priceId, userEmail, giftEmail, returnUrl } = JSON.parse(event.body);
+    const { priceId, userEmail, giftEmail, returnUrl, promotionCode } = JSON.parse(event.body);
 
-    debug.info('Creating checkout session:', { priceId, userEmail, giftEmail });
+    debug.info('Creating checkout session:', { priceId, userEmail, giftEmail, promotionCode });
 
     if (!priceId || !userEmail || !returnUrl) {
       return {
@@ -73,6 +74,17 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Validate promotion code if provided
+    let discounts;
+    if (promotionCode) {
+      const promotion = validatePromotionCode(promotionCode);
+      if (promotion) {
+        discounts = [{
+          coupon: await createOrRetrieveCoupon(promotion.discount)
+        }];
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -86,9 +98,11 @@ export const handler: Handler = async (event) => {
       success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl}/pricing`,
       allow_promotion_codes: true,
+      discounts,
       metadata: {
         userEmail,
-        giftEmail: giftEmail || ''
+        giftEmail: giftEmail || '',
+        promotionCode: promotionCode || ''
       }
     });
 
@@ -117,3 +131,21 @@ export const handler: Handler = async (event) => {
     };
   }
 };
+
+async function createOrRetrieveCoupon(discountPercentage: number): Promise<string> {
+  const couponId = `DISCOUNT-${discountPercentage}`;
+  
+  try {
+    // Try to retrieve existing coupon
+    const existingCoupon = await stripe.coupons.retrieve(couponId);
+    return existingCoupon.id;
+  } catch (error) {
+    // Create new coupon if it doesn't exist
+    const newCoupon = await stripe.coupons.create({
+      id: couponId,
+      percent_off: discountPercentage,
+      duration: 'once'
+    });
+    return newCoupon.id;
+  }
+}
