@@ -8,6 +8,7 @@ import { HistoryView } from './components/HistoryView';
 import { StyleGuide } from './components/StyleGuide';
 import { TreeDetails } from './components/TreeDetails';
 import { PricingPage } from './pages/PricingPage';
+import { SubscriptionSuccessPage } from './pages/SubscriptionSuccessPage';
 import { AuthError } from './components/AuthError';
 import { CookieConsent } from './components/CookieConsent';
 import { useAuthStore } from './store/authStore';
@@ -36,11 +37,32 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function PremiumRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuthStore();
+  const { getCurrentPlan } = useSubscriptionStore();
+  const currentPlan = getCurrentPlan();
+  const isSubscribed = currentPlan !== 'hobby';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-bonsai-green border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!user || !isSubscribed) {
+    logAnalyticsEvent('premium_access_attempt');
+    return <Navigate to="/pricing" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   const { loading } = useAuthStore();
 
   React.useEffect(() => {
-    // Log page views
     logAnalyticsEvent('app_loaded');
   }, []);
 
@@ -59,6 +81,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/success" element={<SubscriptionSuccessPage />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
@@ -84,10 +107,26 @@ export default function App() {
               <StyleGuide />
             </ProtectedRoute>
           } />
-          <Route path="/species-identifier" element={<SpeciesIdentifierPage />} />
-          <Route path="/health-analytics" element={<HealthAnalyticsPage />} />
-          <Route path="/care-guide" element={<CareGuidePage />} />
-          <Route path="/expert-coaching" element={<ExpertCoachingPage />} />
+          <Route path="/species-identifier" element={
+            <PremiumRoute>
+              <SpeciesIdentifierPage />
+            </PremiumRoute>
+          } />
+          <Route path="/health-analytics" element={
+            <PremiumRoute>
+              <HealthAnalyticsPage />
+            </PremiumRoute>
+          } />
+          <Route path="/care-guide" element={
+            <PremiumRoute>
+              <CareGuidePage />
+            </PremiumRoute>
+          } />
+          <Route path="/expert-coaching" element={
+            <PremiumRoute>
+              <ExpertCoachingPage />
+            </PremiumRoute>
+          } />
         </Routes>
         <AuthError />
         <CookieConsent />

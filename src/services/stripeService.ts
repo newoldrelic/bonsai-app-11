@@ -14,7 +14,7 @@ export async function createCheckoutSession(
       priceId,
       userEmail,
       giftEmail,
-      returnUrl: window.location.origin
+      returnUrl: `${window.location.origin}/success`
     }),
   });
 
