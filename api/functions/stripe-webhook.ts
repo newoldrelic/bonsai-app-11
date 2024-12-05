@@ -1,4 +1,19 @@
-// Previous imports remain the same
+import { Handler } from '@netlify/functions';
+import Stripe from 'stripe';
+import { debug } from '../../src/utils/debug';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2023-10-16'
+});
+
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+interface StripeEvent {
+  type: string;
+  data: {
+    object: any;
+  };
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -18,7 +33,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    let stripeEvent;
+    let stripeEvent: StripeEvent;
     
     if (process.env.NODE_ENV === 'development') {
       stripeEvent = JSON.parse(event.body || '');
@@ -32,7 +47,40 @@ export const handler: Handler = async (event) => {
 
     debug.info('Processing webhook event:', stripeEvent.type);
 
-    // Rest of the webhook handler code remains the same
+    switch (stripeEvent.type) {
+      case 'checkout.session.completed': {
+        const session = stripeEvent.data.object;
+        const { userEmail, giftEmail } = session.metadata;
+
+        // Create or update subscription document
+        await stripe.customers.update(session.customer, {
+          metadata: {
+            userEmail,
+            giftEmail: giftEmail || ''
+          }
+        });
+
+        debug.info('Subscription activated for:', userEmail);
+        break;
+      }
+
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const subscription = stripeEvent.data.object;
+        const customer = await stripe.customers.retrieve(subscription.customer as string);
+        
+        if ('metadata' in customer) {
+          const { userEmail } = customer.metadata;
+          debug.info('Subscription updated for:', userEmail);
+        }
+        break;
+      }
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ received: true })
+    };
   } catch (err: any) {
     debug.error('Webhook error:', err);
     return {
