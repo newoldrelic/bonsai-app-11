@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+/// <reference types="vite/client" />
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
-});
+interface ImportMetaEnv {
+  readonly VITE_DEBUG_LEVELS: string
+  readonly VITE_STRIPE_PUBLISHABLE_KEY: string
+  readonly VITE_STRIPE_SECRET_KEY: string
+  readonly VITE_STRIPE_WEBHOOK_SECRET: string
+  readonly VITE_OPENAI_API_KEY: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
