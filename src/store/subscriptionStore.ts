@@ -1,16 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { auth, db } from '../config/firebase';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import type { UserSubscription } from '../types';
 import { createCheckoutSession } from '../services/stripeService';
+import { debug } from '../utils/debug';
 
 interface SubscriptionState {
   subscription: UserSubscription | null;
   loading: boolean;
   error: string | null;
   checkoutSession: string | null;
-  createCheckoutSession: (priceId: string, giftEmail?: string) => Promise<void>;
+  createCheckoutSession: (priceId: string, userEmail: string, giftEmail?: string) => Promise<void>;
   getCurrentPlan: () => string;
   clearError: () => void;
   setSubscription: (subscription: UserSubscription | null) => void;
@@ -24,18 +25,15 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       error: null,
       checkoutSession: null,
 
-      setSubscription: (subscription) => set({ subscription }),
+      setSubscription: (subscription) => {
+        debug.info('Setting subscription:', subscription);
+        set({ subscription });
+      },
 
-      createCheckoutSession: async (priceId: string, giftEmail?: string) => {
-        const user = auth.currentUser;
-        if (!user?.email) {
-          set({ error: 'Please sign in to subscribe' });
-          return;
-        }
-
+      createCheckoutSession: async (priceId: string, userEmail: string, giftEmail?: string) => {
         try {
           set({ loading: true, error: null });
-          const checkoutUrl = await createCheckoutSession(priceId, user.email, giftEmail);
+          const checkoutUrl = await createCheckoutSession(priceId, userEmail, giftEmail);
           window.location.href = checkoutUrl;
         } catch (error: any) {
           console.error('Error creating checkout session:', error);
@@ -75,18 +73,28 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 // Set up subscription listener
 auth.onAuthStateChanged(async (user) => {
   if (user?.email) {
-    // Check subscription in Firestore
     const subscriptionRef = doc(db, 'subscriptions', user.email);
     
     // Set up real-time listener
-    onSnapshot(subscriptionRef, (doc) => {
-      if (doc.exists()) {
-        const subscription = doc.data() as UserSubscription;
-        useSubscriptionStore.getState().setSubscription(subscription);
-      } else {
+    const unsubscribe = onSnapshot(subscriptionRef, 
+      (doc) => {
+        if (doc.exists()) {
+          const subscription = doc.data() as UserSubscription;
+          debug.info('Subscription updated:', subscription);
+          useSubscriptionStore.getState().setSubscription(subscription);
+        } else {
+          debug.info('No subscription found');
+          useSubscriptionStore.getState().setSubscription(null);
+        }
+      },
+      (error) => {
+        debug.error('Error listening to subscription changes:', error);
         useSubscriptionStore.getState().setSubscription(null);
       }
-    });
+    );
+
+    // Clean up listener on auth state change
+    return () => unsubscribe();
   } else {
     useSubscriptionStore.getState().setSubscription(null);
   }
