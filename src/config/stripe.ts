@@ -1,10 +1,17 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { PRICING_CONFIG, HOBBY_FEATURES, PREMIUM_FEATURES, PRICING_TIERS } from './pricing';
 
-// Only load Stripe in browser environment and with public key
+// Test mode publishable key
 export const stripePromise = typeof window !== 'undefined' 
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
   : null;
+
+// Test card numbers for different scenarios
+export const TEST_CARDS = {
+  success: '4242424242424242', // Always succeeds
+  requiresAuth: '4000002500003155', // Requires authentication
+  declined: '4000000000000002', // Always fails
+};
 
 // Pricing configuration
 export const PRICING_PLANS = [
@@ -33,29 +40,5 @@ export const PRICING_PLANS = [
     stripePriceId: PRICING_TIERS.PREMIUM_ANNUAL,
     features: PREMIUM_FEATURES,
     annualDiscount: PRICING_CONFIG.prices.annualDiscount
-  },
-  {
-    id: 'gift-1month',
-    name: 'Gift (1 Month)',
-    price: PRICING_CONFIG.gifts.options.oneMonth.price,
-    interval: 'one-time',
-    stripePriceId: PRICING_TIERS.GIFT_1MONTH,
-    features: PREMIUM_FEATURES
-  },
-  {
-    id: 'gift-3months',
-    name: 'Gift (3 Months)',
-    price: PRICING_CONFIG.gifts.options.threeMonths.price,
-    interval: 'one-time',
-    stripePriceId: PRICING_TIERS.GIFT_3MONTHS,
-    features: PREMIUM_FEATURES
-  },
-  {
-    id: 'gift-6months',
-    name: 'Gift (6 Months)',
-    price: PRICING_CONFIG.gifts.options.sixMonths.price,
-    interval: 'one-time',
-    stripePriceId: PRICING_TIERS.GIFT_6MONTHS,
-    features: PREMIUM_FEATURES
   }
 ] as const;
