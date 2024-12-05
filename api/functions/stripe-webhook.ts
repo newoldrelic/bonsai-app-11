@@ -23,7 +23,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-async function updateSubscriptionInFirestore(userEmail: string, subscriptionData: any) {
+async function updateSubscriptionInFirestore(userEmail: string, subscriptionData: Stripe.Subscription) {
   try {
     const subscriptionRef = doc(db, 'subscriptions', userEmail);
     await setDoc(subscriptionRef, {
@@ -77,7 +77,9 @@ export const handler: Handler = async (event) => {
         }
 
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-        await updateSubscriptionInFirestore(session.customer_email!, subscription);
+        if (session.customer_email) {
+          await updateSubscriptionInFirestore(session.customer_email, subscription);
+        }
 
         return {
           statusCode: 200,
@@ -93,7 +95,7 @@ export const handler: Handler = async (event) => {
         const subscription = stripeEvent.data.object as Stripe.Subscription;
         const customer = await stripe.customers.retrieve(subscription.customer as string);
         
-        if (typeof customer !== 'string' && customer.email) {
+        if ('email' in customer && customer.email) {
           await updateSubscriptionInFirestore(customer.email, subscription);
         }
 
