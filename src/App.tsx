@@ -12,6 +12,7 @@ import { SubscriptionSuccessPage } from './pages/SubscriptionSuccessPage';
 import { AuthError } from './components/AuthError';
 import { CookieConsent } from './components/CookieConsent';
 import { useAuthStore } from './store/authStore';
+import { useSubscriptionStore } from './store/subscriptionStore';
 import { SpeciesIdentifierPage } from './pages/SpeciesIdentifierPage';
 import { HealthAnalyticsPage } from './pages/HealthAnalyticsPage';
 import { CareGuidePage } from './pages/CareGuidePage';
