@@ -9,6 +9,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -21,5 +22,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true
+  },
+  define: {
+    'process.env': {}
   }
 });
