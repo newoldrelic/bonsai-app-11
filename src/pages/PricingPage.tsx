@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Check, AlertCircle, Crown, Gift, Info } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -6,6 +6,12 @@ import { useSubscriptionStore } from '../store/subscriptionStore';
 import { CurrencySelector } from '../components/CurrencySelector';
 import { useCurrencyStore, formatPrice } from '../utils/currency';
 import { PRICING_CONFIG, PRICING_TIERS, HOBBY_FEATURES, PREMIUM_FEATURES } from '../config/pricing';
+import { EmailCollectionModal } from '../components/EmailCollectionModal';
+
+interface PendingSubscription {
+  priceId: string;
+  isGift: boolean;
+}
 
 export function PricingPage() {
   const navigate = useNavigate();
@@ -15,6 +21,7 @@ export function PricingPage() {
   const { createCheckoutSession, getCurrentPlan, loading, error } = useSubscriptionStore();
   const { current: currency } = useCurrencyStore();
   const currentPlan = getCurrentPlan();
+  const [pendingSubscription, setPendingSubscription] = useState<PendingSubscription | null>(null);
 
   useEffect(() => {
     if (location.hash === '#gift-options' && giftSectionRef.current) {
@@ -24,13 +31,29 @@ export function PricingPage() {
     }
   }, [location.hash]);
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async (priceId: string, isGift: boolean = false) => {
     if (!priceId) return;
+    
     if (!user) {
-      navigate('/', { state: { showAuth: true } });
+      setPendingSubscription({ priceId, isGift });
       return;
     }
-    await createCheckoutSession(priceId);
+
+    await createCheckoutSession(priceId, user.email);
+  };
+
+  const handleEmailSubmit = async ({ userEmail, giftEmail }: { userEmail: string; giftEmail?: string }) => {
+    if (!pendingSubscription) return;
+
+    try {
+      await createCheckoutSession(
+        pendingSubscription.priceId,
+        userEmail,
+        giftEmail
+      );
+    } finally {
+      setPendingSubscription(null);
+    }
   };
 
   return (
@@ -211,7 +234,7 @@ export function PricingPage() {
                   <button
                     onClick={() => handleSubscribe(PRICING_TIERS[`GIFT_${duration === 'twelveMonths' ? '12MONTHS' : 
                                                                         duration === 'sixMonths' ? '6MONTHS' :
-                                                                        duration === 'threeMonths' ? '3MONTHS' : '1MONTH'}`])}
+                                                                        duration === 'threeMonths' ? '3MONTHS' : '1MONTH'}`], true)}
                     disabled={loading}
                     className="w-full py-2 px-4 rounded-lg font-medium bg-bonsai-terra text-white hover:bg-bonsai-clay transition-colors disabled:opacity-50"
                   >
@@ -231,6 +254,15 @@ export function PricingPage() {
           </p>
         </div>
       </div>
+
+      {pendingSubscription && (
+        <EmailCollectionModal
+          onClose={() => setPendingSubscription(null)}
+          onSubmit={handleEmailSubmit}
+          isGift={pendingSubscription.isGift}
+          loading={loading}
+        />
+      )}
     </div>
   );
 }

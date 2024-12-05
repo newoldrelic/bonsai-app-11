@@ -1,6 +1,10 @@
 import { PRICING_TIERS } from '../config/pricing';
 
-export async function createCheckoutSession(priceId: string, userEmail: string): Promise<string> {
+export async function createCheckoutSession(
+  priceId: string, 
+  userEmail: string,
+  giftEmail?: string
+): Promise<string> {
   const response = await fetch('/.netlify/functions/create-checkout-session', {
     method: 'POST',
     headers: {
@@ -9,6 +13,7 @@ export async function createCheckoutSession(priceId: string, userEmail: string):
     body: JSON.stringify({
       priceId,
       userEmail,
+      giftEmail,
       returnUrl: window.location.origin
     }),
   });
