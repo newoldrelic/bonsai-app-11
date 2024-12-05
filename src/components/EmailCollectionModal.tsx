@@ -81,7 +81,7 @@ export function EmailCollectionModal({ onClose, onSubmit, isGift = false, loadin
                 />
               </div>
               <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                You can send the gift code to the recipient later if you prefer
+                You can send the gift code to the recipient later if you prefer.
               </p>
             </div>
           )}
