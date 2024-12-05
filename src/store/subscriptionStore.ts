@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { auth } from '../config/firebase';
+import { auth, db } from '../config/firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import type { UserSubscription } from '../types';
 import { createCheckoutSession } from '../services/stripeService';
 
@@ -12,6 +13,7 @@ interface SubscriptionState {
   createCheckoutSession: (priceId: string, giftEmail?: string) => Promise<void>;
   getCurrentPlan: () => string;
   clearError: () => void;
+  setSubscription: (subscription: UserSubscription | null) => void;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>()(
@@ -21,6 +23,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       loading: false,
       error: null,
       checkoutSession: null,
+
+      setSubscription: (subscription) => set({ subscription }),
 
       createCheckoutSession: async (priceId: string, giftEmail?: string) => {
         const user = auth.currentUser;
@@ -44,10 +48,16 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       getCurrentPlan: () => {
         const { subscription } = get();
-        // Only return premium if user is logged in and has an active subscription
-        if (auth.currentUser && subscription?.status === 'active') {
+        const user = auth.currentUser;
+        
+        if (!user) {
+          return 'hobby';
+        }
+
+        if (subscription?.status === 'active') {
           return subscription.planId;
         }
+
         return 'hobby';
       },
 
@@ -61,3 +71,23 @@ export const useSubscriptionStore = create<SubscriptionState>()(
     }
   )
 );
+
+// Set up subscription listener
+auth.onAuthStateChanged(async (user) => {
+  if (user?.email) {
+    // Check subscription in Firestore
+    const subscriptionRef = doc(db, 'subscriptions', user.email);
+    
+    // Set up real-time listener
+    onSnapshot(subscriptionRef, (doc) => {
+      if (doc.exists()) {
+        const subscription = doc.data() as UserSubscription;
+        useSubscriptionStore.getState().setSubscription(subscription);
+      } else {
+        useSubscriptionStore.getState().setSubscription(null);
+      }
+    });
+  } else {
+    useSubscriptionStore.getState().setSubscription(null);
+  }
+});

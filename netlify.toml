@@ -24,6 +24,7 @@
 
 [template.environment]
   STRIPE_SECRET_KEY = "Secret key from Stripe dashboard"
+  STRIPE_WEBHOOK_SECRET = "Webhook signing secret from Stripe dashboard"
   OPENAI_API_KEY = "Secret key from OpenAI dashboard"
 
 [[headers]]
