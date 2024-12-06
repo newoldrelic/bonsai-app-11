@@ -13,8 +13,6 @@
     "resolveJsonModule": true,
     "types": ["node", "@netlify/functions", "vite/client"],
     "baseUrl": "../..",
-    "composite": true,
-    "declaration": false,
     "paths": {
       "@/*": ["src/*"]
     }
