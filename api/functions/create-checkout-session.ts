@@ -1,8 +1,11 @@
 import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
 import Stripe from 'stripe';
-import { debug } from '../../src/utils/debug';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Get environment variables directly from process.env
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const NODE_ENV = process.env.NODE_ENV || 'production';
+
+const stripe = new Stripe(STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16'
 });
 
@@ -12,9 +15,11 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
+
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers, body: '' };
   }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -22,20 +27,24 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
-  if (!process.env.STRIPE_SECRET_KEY) {
-    debug.error('Missing STRIPE_SECRET_KEY environment variable');
+
+  if (!STRIPE_SECRET_KEY) {
+    console.error('Missing STRIPE_SECRET_KEY environment variable');
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ error: 'Payment service is not properly configured' })
     };
   }
+
   try {
     if (!event.body) {
       throw new Error('Missing request body');
     }
+
     const { priceId, userEmail, giftEmail, returnUrl } = JSON.parse(event.body);
-    debug.info('Creating checkout session:', { priceId, userEmail, giftEmail });
+    console.info('Creating checkout session:', { priceId, userEmail, giftEmail });
+
     if (!priceId || !userEmail || !returnUrl) {
       return {
         statusCode: 400,
@@ -50,11 +59,12 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
         })
       };
     }
+
     // Verify the price ID exists in Stripe
     try {
       await stripe.prices.retrieve(priceId);
     } catch (error) {
-      debug.error('Invalid price ID:', error);
+      console.error('Invalid price ID:', error);
       return {
         statusCode: 400,
         headers,
@@ -64,6 +74,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
         })
       };
     }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -82,17 +93,21 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
         giftEmail: giftEmail || ''
       }
     });
+
     if (!session.url) {
       throw new Error('Failed to generate checkout URL');
     }
-    debug.info('Checkout session created successfully:', { sessionId: session.id });
+
+    console.info('Checkout session created successfully:', { sessionId: session.id });
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ url: session.url })
     };
+
   } catch (error: unknown) {
-    debug.error('Checkout session error:', error);
+    console.error('Checkout session error:', error);
     
     let statusCode = 500;
     let errorMessage = 'Failed to create checkout session';
@@ -109,7 +124,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
       headers,
       body: JSON.stringify({ 
         error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error : undefined
+        details: NODE_ENV === 'development' ? error : undefined
       })
     };
   }
