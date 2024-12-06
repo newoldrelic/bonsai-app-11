@@ -45,4 +45,11 @@ declare module '@netlify/functions' {
       };
     };
   }
+
+  export type Handler = (event: HandlerEvent, context: Context) => Promise<HandlerResponse>;
+}
+
+declare module 'lucide-react' {
+  import { FC, SVGProps } from 'react';
+  export type IconType = FC<SVGProps<SVGSVGElement>>;
 }
