@@ -1,3 +1,5 @@
+import type { IconType } from 'lucide-react';
+
 export interface BonsaiTree {
   id: string;
   userEmail: string;
@@ -55,11 +57,11 @@ export interface PricingPlan {
   duration?: string;
   features: Array<{
     text: string;
-    icon: any;
+    icon: IconType;
     premium?: boolean;
   }>;
   stripePriceId: string;
-  icon?: any;
+  icon?: IconType;
 }
 
 export interface UserSubscription {
@@ -69,4 +71,10 @@ export interface UserSubscription {
   planId: string;
   currentPeriodEnd: number;
   cancelAtPeriodEnd: boolean;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  features: string[];
 }
