@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ES2020",
-    "moduleResolution": "node",
+    "moduleResolution": "node",  // Changed from bundler to node for Netlify functions
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
@@ -12,7 +12,12 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "types": ["node", "@netlify/functions"],
-    "typeRoots": ["../../node_modules/@types"]
+    "baseUrl": "../..",
+    "composite": true,  // Added for project references
+    "declaration": true,  // Added for project references
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": [
     "./**/*",
@@ -21,5 +26,5 @@
     "../../src/config/ai-prompts.ts",
     "../../src/config/constants.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }
