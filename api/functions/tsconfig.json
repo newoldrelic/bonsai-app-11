@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ES2020",
-    "moduleResolution": "node",  // Changed from bundler to node for Netlify functions
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
@@ -11,10 +11,10 @@
     "rootDir": "../..",
     "allowJs": true,
     "resolveJsonModule": true,
-    "types": ["node", "@netlify/functions"],
+    "types": ["node", "@netlify/functions", "vite/client"],
     "baseUrl": "../..",
-    "composite": true,  // Added for project references
-    "declaration": true,  // Added for project references
+    "composite": true,
+    "declaration": true,
     "paths": {
       "@/*": ["src/*"]
     }
@@ -24,7 +24,8 @@
     "../../src/utils/debug.ts",
     "../../src/utils/openai.ts",
     "../../src/config/ai-prompts.ts",
-    "../../src/config/constants.ts"
+    "../../src/config/constants.ts",
+    "../../src/vite-env.d.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }
