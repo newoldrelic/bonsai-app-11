@@ -4,5 +4,9 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" },
     { "path": "./api/functions/tsconfig.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true
+  }
 }

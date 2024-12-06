@@ -21,6 +21,7 @@
 [build.environment]
   NODE_VERSION = "18"
   NODE_ENV = "production"
+  CI = "true"
 
 [dev]
   command = "npm run dev"
