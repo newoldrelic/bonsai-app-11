@@ -1,4 +1,5 @@
-import { Handler } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import Stripe from 'stripe';
 import { debug } from '../../src/utils/debug';
 
@@ -6,17 +7,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16'
 });
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
-
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers, body: '' };
   }
-
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -24,7 +23,6 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
-
   if (!process.env.STRIPE_SECRET_KEY) {
     debug.error('Missing STRIPE_SECRET_KEY environment variable');
     return {
@@ -33,16 +31,12 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Payment service is not properly configured' })
     };
   }
-
   try {
     if (!event.body) {
       throw new Error('Missing request body');
     }
-
     const { priceId, userEmail, giftEmail, returnUrl } = JSON.parse(event.body);
-
     debug.info('Creating checkout session:', { priceId, userEmail, giftEmail });
-
     if (!priceId || !userEmail || !returnUrl) {
       return {
         statusCode: 400,
@@ -57,22 +51,20 @@ export const handler: Handler = async (event) => {
         })
       };
     }
-
     // Verify the price ID exists in Stripe
     try {
       await stripe.prices.retrieve(priceId);
-    } catch (error: any) {
+    } catch (error) {
       debug.error('Invalid price ID:', error);
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
           error: 'Invalid price ID',
-          details: error.message
+          details: error instanceof Error ? error.message : 'Unknown error'
         })
       };
     }
-
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -91,27 +83,33 @@ export const handler: Handler = async (event) => {
         giftEmail: giftEmail || ''
       }
     });
-
     if (!session.url) {
       throw new Error('Failed to generate checkout URL');
     }
-
     debug.info('Checkout session created successfully:', { sessionId: session.id });
-
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ url: session.url })
     };
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug.error('Checkout session error:', error);
     
+    let statusCode = 500;
+    let errorMessage = 'Failed to create checkout session';
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      if ((error as any).statusCode) {
+        statusCode = (error as any).statusCode;
+      }
+    }
+    
     return {
-      statusCode: error.statusCode || 500,
+      statusCode,
       headers,
       body: JSON.stringify({ 
-        error: error.message || 'Failed to create checkout session',
+        error: errorMessage,
         details: process.env.NODE_ENV === 'development' ? error : undefined
       })
     };

@@ -1,9 +1,10 @@
-import { Handler } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import OpenAI from 'openai';
 import { debug } from '../../src/utils/debug';
 import { checkOpenAIConfig } from '../../src/utils/openai';
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -55,20 +56,22 @@ export const handler: Handler = async (event) => {
         response: response.choices[0]?.message?.content
       })
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug.error('OpenAI test error:', error);
     
     let errorMessage = 'API test failed';
     let statusCode = 500;
 
-    if (error.status === 401) {
-      errorMessage = 'Invalid API key';
-      statusCode = 401;
-    } else if (error.status === 404) {
-      errorMessage = 'Model not available for this API key';
-      statusCode = 404;
-    } else if (error.message) {
-      errorMessage = error.message;
+    if (error instanceof Error) {
+      if ((error as any).status === 401) {
+        errorMessage = 'Invalid API key';
+        statusCode = 401;
+      } else if ((error as any).status === 404) {
+        errorMessage = 'Model not available for this API key';
+        statusCode = 404;
+      } else {
+        errorMessage = error.message;
+      }
     }
 
     return {
@@ -76,7 +79,7 @@ export const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({ 
         error: errorMessage,
-        details: error.message
+        details: error instanceof Error ? error.message : undefined
       })
     };
   }

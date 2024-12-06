@@ -1,21 +1,20 @@
-import { Handler } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import OpenAI from 'openai';
 import { debug } from '../../src/utils/debug';
 import { checkOpenAIConfig } from '../../src/utils/openai';
 import { AI_PROMPTS } from '../../src/config/ai-prompts';
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
   };
-
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers, body: '' };
   }
-
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -23,7 +22,6 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
-
   try {
     // Validate OpenAI configuration
     if (!checkOpenAIConfig()) {
@@ -33,7 +31,6 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'OpenAI API is not properly configured' })
       };
     }
-
     // Validate request body
     if (!event.body) {
       debug.warn('No request body provided');
@@ -43,7 +40,6 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'No image data provided' })
       };
     }
-
     // Parse request data
     let requestData;
     try {
@@ -56,7 +52,6 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Invalid request format' })
       };
     }
-
     const { image } = requestData;
     if (!image) {
       return {
@@ -65,17 +60,14 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Image data is required' })
       };
     }
-
     // Initialize OpenAI client
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
-
     // Format image URL
     const imageUrl = image.startsWith('data:') 
       ? image 
       : `data:image/jpeg;base64,${image}`;
-
     // Make OpenAI API request
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -98,12 +90,10 @@ export const handler: Handler = async (event) => {
       ],
       max_tokens: AI_PROMPTS.speciesIdentification.maxTokens
     });
-
     const species = response.choices[0]?.message?.content;
     if (!species) {
       throw new Error('No species identification received');
     }
-
     return {
       statusCode: 200,
       headers,
@@ -112,33 +102,32 @@ export const handler: Handler = async (event) => {
         success: true
       })
     };
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug.error('Species identification error:', error);
     
     let errorMessage = 'Failed to identify species';
     let statusCode = 500;
-
-    if (error.status === 401) {
-      statusCode = 401;
-      errorMessage = 'OpenAI API authentication failed';
-    } else if (error.status === 429) {
-      statusCode = 429;
-      errorMessage = 'Too many requests. Please try again later';
-    } else if (error.code === 'ECONNREFUSED' || error.code === 'ECONNRESET') {
-      statusCode = 503;
-      errorMessage = 'Connection to OpenAI failed';
-    } else if (error.message) {
-      errorMessage = error.message;
+    
+    if (error instanceof Error) {
+      if ((error as any).status === 401) {
+        statusCode = 401;
+        errorMessage = 'OpenAI API authentication failed';
+      } else if ((error as any).status === 429) {
+        statusCode = 429;
+        errorMessage = 'Too many requests. Please try again later';
+      } else if (['ECONNREFUSED', 'ECONNRESET'].includes((error as any).code)) {
+        statusCode = 503;
+        errorMessage = 'Connection to OpenAI failed';
+      }
     }
-
+    
     return {
       statusCode,
       headers,
       body: JSON.stringify({ 
         error: errorMessage,
         success: false,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : undefined) : undefined
       })
     };
   }

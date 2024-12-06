@@ -1,4 +1,5 @@
-import { Handler } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import Stripe from 'stripe';
 import { debug } from '../../src/utils/debug';
 
@@ -25,9 +26,9 @@ interface StripeEvent {
   };
 }
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405 };
+    return { statusCode: 405, body: '' };
   }
   
   const sig = event.headers['stripe-signature'];
@@ -40,7 +41,6 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Missing signature or webhook secret' })
     };
   }
-
   try {
     let stripeEvent: StripeEvent;
     
@@ -53,9 +53,7 @@ export const handler: Handler = async (event) => {
         endpointSecret!
       ) as StripeEvent;
     }
-
     debug.info('Processing webhook event:', stripeEvent.type);
-
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
@@ -85,16 +83,21 @@ export const handler: Handler = async (event) => {
         break;
       }
     }
-
     return {
       statusCode: 200,
       body: JSON.stringify({ received: true })
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     debug.error('Webhook error:', err);
+    
+    let errorMessage = 'Webhook error';
+    if (err instanceof Error) {
+      errorMessage = err.message;
+    }
+    
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: err.message })
+      body: JSON.stringify({ error: errorMessage })
     };
   }
 };
