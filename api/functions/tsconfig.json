@@ -11,7 +11,8 @@
     "rootDir": "../..",
     "allowJs": true,
     "resolveJsonModule": true,
-    "types": ["node", "@netlify/functions"]
+    "types": ["node", "@netlify/functions"],
+    "typeRoots": ["../../node_modules/@types"]
   },
   "include": [
     "./**/*",
