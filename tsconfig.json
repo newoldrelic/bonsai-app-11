@@ -7,6 +7,7 @@
   ],
   "compilerOptions": {
     "composite": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["vite/client", "node"]
   }
 }
