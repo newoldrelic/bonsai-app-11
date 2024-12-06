@@ -11,9 +11,10 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 interface StripeMetadata {
   userEmail: string;
   giftEmail?: string;
+  [key: string]: string | undefined;  // Add index signature
 }
 
-interface StripeCustomer extends Stripe.Customer {
+interface StripeCustomer extends Omit<Stripe.Customer, 'metadata'> {
   metadata: StripeMetadata;
 }
 
@@ -28,7 +29,7 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405 };
   }
-
+  
   const sig = event.headers['stripe-signature'];
   
   if (process.env.NODE_ENV === 'development') {
@@ -58,8 +59,8 @@ export const handler: Handler = async (event) => {
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
-        const metadata = session.metadata as StripeMetadata;
-
+        const metadata = session.metadata as unknown as StripeMetadata;
+        
         if (session.customer) {
           await stripe.customers.update(session.customer as string, {
             metadata: {
@@ -68,19 +69,17 @@ export const handler: Handler = async (event) => {
             }
           });
         }
-
         debug.info('Subscription activated for:', metadata.userEmail);
         break;
       }
-
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = stripeEvent.data.object as Stripe.Subscription;
         if (subscription.customer) {
           const customer = await stripe.customers.retrieve(
             subscription.customer as string
-          ) as StripeCustomer;
-
+          ).then(result => result as unknown as StripeCustomer);
+          
           debug.info('Subscription updated for:', customer.metadata.userEmail);
         }
         break;
