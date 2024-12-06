@@ -1,32 +1,31 @@
-import type { Handler } from '@netlify/functions';
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
 import Stripe from 'stripe';
 import { debug } from '../../src/utils/debug';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16'
+ apiVersion: '2023-10-16'
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 interface StripeMetadata {
-  userEmail: string;
-  giftEmail?: string;
-  [key: string]: string | undefined;  // Add index signature
+ userEmail: string;
+ giftEmail?: string;
+ [key: string]: string | undefined;
 }
 
 interface StripeCustomer extends Omit<Stripe.Customer, 'metadata'> {
-  metadata: StripeMetadata;
+ metadata: StripeMetadata;
 }
 
 interface StripeEvent {
-  type: string;
-  data: {
-    object: Stripe.Checkout.Session | Stripe.Subscription;
-  };
+ type: string;
+ data: {
+   object: Stripe.Checkout.Session | Stripe.Subscription;
+ };
 }
 
-export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: '' };
   }

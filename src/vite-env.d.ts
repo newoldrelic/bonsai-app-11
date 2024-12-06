@@ -17,8 +17,6 @@ interface ImportMeta {
 }
 
 declare module '@netlify/functions' {
-  export type Handler = (event: HandlerEvent, context: Context) => Promise<HandlerResponse>;
-  
   export interface HandlerEvent {
     body: string | null;
     headers: { [header: string]: string | undefined };
@@ -32,8 +30,7 @@ declare module '@netlify/functions' {
   export interface HandlerResponse {
     statusCode: number;
     body?: string;
-    headers?: { [header: string]: string | string[] };
-    isBase64Encoded?: boolean;
+    headers?: { [header: string]: string | undefined };
   }
 
   export interface Context {

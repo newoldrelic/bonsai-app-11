@@ -1,5 +1,4 @@
-import type { Handler } from '@netlify/functions';
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
 import Stripe from 'stripe';
 import { debug } from '../../src/utils/debug';
 
@@ -7,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16'
 });
 
-export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

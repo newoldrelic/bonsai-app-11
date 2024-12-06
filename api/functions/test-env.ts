@@ -1,7 +1,7 @@
-import { Handler } from '@netlify/functions';
+import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
 import { debug } from '../../src/utils/debug';
 
-export const handler: Handler = async () => {
+export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type'

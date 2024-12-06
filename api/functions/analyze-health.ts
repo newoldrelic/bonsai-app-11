@@ -1,13 +1,12 @@
-import type { Handler } from '@netlify/functions';
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import type { HandlerEvent, HandlerResponse } from '@netlify/functions';
 import OpenAI from 'openai';
 import { AI_PROMPTS } from '../../src/config/ai-prompts';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+ apiKey: process.env.OPENAI_API_KEY
 });
 
-export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   // Add CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
