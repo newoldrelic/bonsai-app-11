@@ -5,7 +5,7 @@ import { useSubscriptionStore } from '../store/subscriptionStore';
 
 declare global {
   interface Window {
-    PlayAI: {
+    PlayAI?: {
       open: (id: string) => void;
     };
   }
@@ -17,7 +17,6 @@ export function ExpertCoachingPage() {
   const currentPlan = getCurrentPlan();
   const isSubscribed = currentPlan !== 'hobby';
   const [message, setMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     if (!isSubscribed) {
@@ -25,34 +24,33 @@ export function ExpertCoachingPage() {
       return;
     }
 
-    // Load PlayAI script
+    // Add the PlayAI script
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/@play-ai/web-embed';
     script.async = true;
-    script.onload = () => {
-      window.PlayAI?.open('AVRe8N5e2Qj-EgOD8NeaC');
-    };
-    document.body.appendChild(script);
+    document.head.appendChild(script);
 
+    // Add the initialization script
+    const initScript = document.createElement('script');
+    initScript.textContent = `
+      addEventListener("load", () => { 
+        PlayAI.open('AVRe8N5e2Qj-EgOD8NeaC');
+      });
+    `;
+    document.head.appendChild(initScript);
+
+    // Cleanup
     return () => {
-      document.body.removeChild(script);
+      document.head.removeChild(script);
+      document.head.removeChild(initScript);
     };
   }, [isSubscribed, navigate]);
-
-  const handleStartVoiceCall = () => {
-    window.PlayAI?.open('AVRe8N5e2Qj-EgOD8NeaC');
-  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
     // TODO: Implement chat functionality
     setMessage('');
-  };
-
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    // TODO: Implement voice recording
   };
 
   if (!isSubscribed) {
@@ -73,23 +71,6 @@ export function ExpertCoachingPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="card p-6">
-            <h2 className="text-xl font-semibold text-bonsai-bark dark:text-white mb-4 flex items-center space-x-2">
-              <PhoneCall className="w-6 h-6 text-bonsai-green" />
-              <span>Voice Assistant</span>
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Have a natural conversation with our AI assistant, trained on Ken Nakamura's expertise.
-            </p>
-            <button
-              onClick={handleStartVoiceCall}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-bonsai-green hover:bg-bonsai-moss text-white transition-colors"
-            >
-              <Mic className="w-5 h-5" />
-              <span>Start Voice Chat</span>
-            </button>
-          </div>
-
           <div className="card p-6">
             <h2 className="text-xl font-semibold text-bonsai-bark dark:text-white mb-4 flex items-center space-x-2">
               <MessageCircle className="w-6 h-6 text-bonsai-green" />
