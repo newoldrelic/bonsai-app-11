@@ -103,7 +103,7 @@ export function ExpertCoachingPage() {
               <div>
                 <h3 className="font-medium text-bonsai-bark dark:text-white">24/7 Chat Support</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Get answers to your questions anytime through our chat interface.
+                  Get answers to your bonsai questions anytime through our chat interface.
                 </p>
               </div>
             </div>
